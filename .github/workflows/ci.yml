@@ -15,6 +15,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # The runner image preconfigures Google's Chrome apt repo. Playwright downloads its
+      # own Chromium build and never uses it, but `--with-deps` runs apt-get update across
+      # every configured repo, so a bad index there fails the job for unrelated reasons.
+      - run: sudo rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.sources
       - run: npx playwright install --with-deps chromium
       - run: npm run typecheck
       - run: npm run format:check
