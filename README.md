@@ -32,7 +32,7 @@ The model exists only on the discovery branch. Replay loads capability JSON and 
 - One-attempt automatic recovery for known interstitials, followed by escalation when recovery fails.
 - Per-step read/reversible/irreversible effects, explicit approval for irreversible actions, same-session handoff, ownership epochs, and engine-validated resume.
 - Restrictive tenant bindings, demonstrated by running the same artifact against Cedar and Harbor branded variants.
-- Tests for parameterized replay, business outcomes, state reclassification, output corruption, policy denial, redaction, ownership races, handoff, and tenant reuse.
+- Tests for parameterized replay, business outcomes, state reclassification, output corruption, policy denial, redaction, ownership races, handoff, tenant reuse, and compilation of a route the engineer never pre-authored.
 
 The generated IDs and table-based markup in LegacyBank are intentional. Replay locates controls through stable user-facing relationships such as a caption's table row and an account suffix, never those IDs.
 
@@ -75,18 +75,22 @@ With LegacyBank and Ollama running:
 
 ```bash
 OLLAMA_NO_CLOUD=1 npm run discover -- \
-  --goal "Prepare a stop-payment review using the supplied inputs and stop before submitting" \
+  --goal "Prepare a stop-payment review using the supplied inputs, and stop on the review screen that shows every requested detail with a status of Ready for review" \
   --target http://127.0.0.1:3000/servicing \
   --inputs examples/stop-payment-success.json \
   --out capabilities/prepare-stop-payment.discovered.json \
   --model qwen3:4b
 ```
 
-The engineer-authored artifact contract defines inputs, outputs, effects, known outcomes, and the success predicate. The model discovers only the UI path. Its allowed input references are generated from that contract, and each chosen control is matched back to a contract target before execution. The saved artifact labels contract knowledge separately from the executed trace.
+`--inputs` is required; everything else has a default. `--contract` selects the engineer-authored contract (`capabilities/prepare-stop-payment.example.json`), and the goal, entry URL, and output path are derived from it and from the policy's first allowed origin. Workflow-specific wording belongs in `--goal`, not in the model prompt, which names no screen, control, or domain.
 
-The linked reviewed trace is a genuine Qwen run. The committed artifact preserves that executed path; its provenance note records the later contract-only migration to generic formats, effects, and recovery semantics, which did not rerun the model.
+The engineer-authored contract defines the typed inputs and how each renders in a UI, the outputs, the known outcomes, and the success predicate. It does not define the route. The model may drive any control the policy gate left in the observation, including controls no contract step mentions; what it cannot do is name a control that is not in the current observation, or write a literal value instead of naming a declared input. Nothing is saved unless the engineer-authored success predicate passes when checked independently of the model, so a wrong path produces no capability rather than a bad one.
 
-Qwen3 4B was chosen because it runs locally at zero service cost, keeps regulated-style synthetic inputs on the machine, and is easy to reproduce. The model sees a pre-filtered list of policy-allowed actions rather than the whole browser as an unconstrained tool. That narrow action space is both what lets a small model succeed and a safety boundary.
+Where a discovered control does match a pre-authored step, that step's effect and checkpoints annotate it. Where it does not, the compiled step carries the checkpoints the run actually observed and a conservative `reversible` effect, and the provenance note reports how many steps fell into each group so a reviewer knows what to check before approving.
+
+The committed artifact is the direct output of the reviewed Qwen run linked below: its `provenance.discoveryRunId` and model are checked against the reviewed discovery manifest by `npm run check:evidence`, so the artifact and the run cannot drift apart.
+
+Qwen3 4B was chosen because it runs locally at zero service cost, keeps regulated-style synthetic inputs on the machine, and is easy to reproduce. The model sees a pre-filtered list of policy-allowed actions rather than the whole browser as an unconstrained tool. That narrow action space is both what lets a small model succeed and the safety boundary: the prompt names no forbidden control, because forbidden controls never reach the model. `Submit stop payment` is removed from the observation by the policy gate and is not resolvable by the executor, so the guardrail holds whatever the model asks for.
 
 ### 2. Stop Ollama and replay with different inputs
 
@@ -168,7 +172,7 @@ npm run check:evidence
 npm audit
 ```
 
-`npm test` runs 31 contract and browser-level acceptance tests against isolated local target servers and real headless Chromium instances. It does not invoke a model. Fault and handoff evidence is produced by this deterministic harness with scripted operator callbacks; `npm run demo:handoff` is the separate manual path. The reviewed [discovery](./evidence/reviewed/discovery/manifest.json), [model-free replay](./evidence/reviewed/replay/manifest.json), and scenario runs are committed under `evidence/reviewed/`.
+`npm test` runs 33 contract and browser-level acceptance tests against isolated local target servers and real headless Chromium instances. It does not invoke a model. Fault and handoff evidence is produced by this deterministic harness with scripted operator callbacks; `npm run demo:handoff` is the separate manual path. The reviewed [discovery](./evidence/reviewed/discovery/manifest.json), [model-free replay](./evidence/reviewed/replay/manifest.json), and scenario runs are committed under `evidence/reviewed/`.
 
 List the callable capabilities as agent-facing function definitions:
 
@@ -182,7 +186,7 @@ The catalog derives parameter and result schemas from each validated artifact, s
 
 The authoritative format is JSON validated by Zod. It contains four kinds of information:
 
-1. Callable contract: identity, version, typed inputs, typed outputs, and compatibility.
+1. Callable contract: identity, version, typed inputs and their UI display formats, typed outputs, and compatibility.
 2. UI program: targets, ordered actions, effect annotations, preconditions, postconditions, and bounded timeouts.
 3. Runtime semantics: business outcomes, bounded recoveries, hard failures, approvals, and the final success predicate.
 4. Governance: policy profile and provenance linking discovered steps to a real run.

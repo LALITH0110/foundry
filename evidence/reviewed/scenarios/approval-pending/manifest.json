@@ -1,9 +1,9 @@
 {
-  "runId": "5f7de584-9316-4690-a788-b59fdfdc463c",
+  "runId": "e5a6f3dd-2285-44e8-be9e-c4b613ee5ae6",
   "kind": "replay",
-  "startedAt": "2026-09-09T15:50:41.376Z",
+  "startedAt": "2026-09-09T16:44:10.973Z",
   "capabilityId": "prepare_stop_payment_review",
   "capabilityVersion": "1.0.0-discovered",
   "modelRequests": 0,
-  "sessionId": "058f2fe3-c9fb-4156-b0cb-dca6c2e1afb4"
+  "sessionId": "[REDACTED]-9a46-42b6-87c1-a2b05f09f70d"
 }

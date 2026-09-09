@@ -32,7 +32,11 @@
       "required": true,
       "sensitive": true,
       "minimum": 1,
-      "maximum": 100000000
+      "maximum": 100000000,
+      "display": {
+        "kind": "minorUnits",
+        "scale": 2
+      }
     },
     "reason": {
       "type": "string",
@@ -105,14 +109,14 @@
     "discovered-target-5": {
       "kind": "tableRowControl",
       "frame": "workspace",
-      "rowText": "Reason",
-      "control": "select"
+      "rowText": "Amount (USD)",
+      "control": "input"
     },
     "discovered-target-6": {
       "kind": "tableRowControl",
       "frame": "workspace",
-      "rowText": "Amount (USD)",
-      "control": "input"
+      "rowText": "Reason",
+      "control": "select"
     },
     "discovered-target-7": {
       "kind": "role",
@@ -266,12 +270,12 @@
         "kind": "navigate",
         "path": "/servicing"
       },
+      "effect": "read",
       "postcondition": {
         "kind": "visible",
-        "target": "discovered-target-1"
+        "target": "member-input"
       },
-      "timeoutMs": 5000,
-      "effect": "read"
+      "timeoutMs": 5000
     },
     {
       "id": "discovered-1",
@@ -283,12 +287,20 @@
           "name": "memberId"
         }
       },
+      "effect": "reversible",
       "precondition": {
         "kind": "urlPath",
         "path": "/workspace/search"
       },
-      "timeoutMs": 5000,
-      "effect": "reversible"
+      "postcondition": {
+        "kind": "textEquals",
+        "target": "member-input",
+        "value": {
+          "kind": "input",
+          "name": "memberId"
+        }
+      },
+      "timeoutMs": 5000
     },
     {
       "id": "discovered-2",
@@ -296,6 +308,7 @@
         "kind": "click",
         "target": "discovered-target-2"
       },
+      "effect": "read",
       "precondition": {
         "kind": "urlPath",
         "path": "/workspace/search"
@@ -304,8 +317,7 @@
         "kind": "urlPath",
         "path": "/workspace/member"
       },
-      "timeoutMs": 5000,
-      "effect": "read"
+      "timeoutMs": 5000
     },
     {
       "id": "discovered-3",
@@ -313,6 +325,7 @@
         "kind": "click",
         "target": "discovered-target-3"
       },
+      "effect": "read",
       "precondition": {
         "kind": "all",
         "checks": [
@@ -338,8 +351,7 @@
         "status": "business_outcome",
         "code": "ACCOUNT_NOT_FOUND"
       },
-      "timeoutMs": 5000,
-      "effect": "read"
+      "timeoutMs": 5000
     },
     {
       "id": "discovered-4",
@@ -351,35 +363,18 @@
           "name": "checkNumber"
         }
       },
+      "effect": "reversible",
       "precondition": {
         "kind": "urlPath",
         "path": "/workspace/stop-payment"
       },
-      "timeoutMs": 5000,
-      "effect": "reversible"
+      "timeoutMs": 5000
     },
     {
       "id": "discovered-5",
       "action": {
-        "kind": "select",
-        "target": "discovered-target-5",
-        "value": {
-          "kind": "input",
-          "name": "reason"
-        }
-      },
-      "precondition": {
-        "kind": "urlPath",
-        "path": "/workspace/stop-payment"
-      },
-      "timeoutMs": 5000,
-      "effect": "reversible"
-    },
-    {
-      "id": "discovered-6",
-      "action": {
         "kind": "fill",
-        "target": "discovered-target-6",
+        "target": "discovered-target-5",
         "value": {
           "kind": "input",
           "name": "amountMinor",
@@ -389,12 +384,29 @@
           }
         }
       },
+      "effect": "reversible",
       "precondition": {
         "kind": "urlPath",
         "path": "/workspace/stop-payment"
       },
-      "timeoutMs": 5000,
-      "effect": "reversible"
+      "timeoutMs": 5000
+    },
+    {
+      "id": "discovered-6",
+      "action": {
+        "kind": "select",
+        "target": "discovered-target-6",
+        "value": {
+          "kind": "input",
+          "name": "reason"
+        }
+      },
+      "effect": "reversible",
+      "precondition": {
+        "kind": "urlPath",
+        "path": "/workspace/stop-payment"
+      },
+      "timeoutMs": 5000
     },
     {
       "id": "discovered-7",
@@ -402,6 +414,7 @@
         "kind": "click",
         "target": "discovered-target-7"
       },
+      "effect": "reversible",
       "precondition": {
         "kind": "urlPath",
         "path": "/workspace/stop-payment"
@@ -410,8 +423,7 @@
         "kind": "urlPath",
         "path": "/workspace/review"
       },
-      "timeoutMs": 5000,
-      "effect": "reversible"
+      "timeoutMs": 5000
     }
   ],
   "handlers": [
@@ -592,8 +604,8 @@
   "policyProfile": "legacybank-review-only-v1",
   "provenance": {
     "kind": "discovered",
-    "discoveryRunId": "e99b305d-b906-49ce-bbc4-e32d6d5582bb",
+    "discoveryRunId": "d93e5679-923a-4cc0-8524-6a88c38d9ab2",
     "model": "qwen3:4b",
-    "note": "Executed path from the linked genuine Qwen discovery run; engineer-authored contract metadata was migrated to generic formats, effects, and recovery semantics without rerunning the model."
+    "note": "Executed steps were compiled from the model run; inputs, outputs, outcomes, and success criteria are engineer-authored contract. All 7 discovered steps matched a pre-authored control and inherited its effect and checkpoints."
   }
 }

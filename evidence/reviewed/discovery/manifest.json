@@ -1,8 +1,8 @@
 {
-  "runId": "e99b305d-b906-49ce-bbc4-e32d6d5582bb",
+  "runId": "d93e5679-923a-4cc0-8524-6a88c38d9ab2",
   "kind": "discovery",
-  "startedAt": "2026-09-09T06:09:45.481Z",
-  "goal": "Prepare a stop-payment review using the supplied inputs and stop before submitting",
+  "startedAt": "2026-09-09T16:41:50.314Z",
+  "goal": "Prepare a stop-payment review using the supplied inputs, and stop on the review screen that shows every requested detail with a status of Ready for review",
   "model": "qwen3:4b",
   "target": "http://127.0.0.1:3000/servicing",
   "maxActions": 25

@@ -24,7 +24,7 @@ export type ReplayOptions = {
   ) => Promise<void | InterventionResolution>;
 };
 
-function describeCheckpoint(predicate: Predicate, capability: Capability): string {
+export function describeCheckpoint(predicate: Predicate, capability: Capability): string {
   if (predicate.kind === 'all') {
     return predicate.checks.map((check) => describeCheckpoint(check, capability)).join(' and ');
   }
@@ -66,10 +66,14 @@ async function activeHandler(surface: SurfaceAdapter, capability: Capability, in
   return undefined;
 }
 
-function moneyToMinor(value: string): number {
-  const match = value.replace(/[$,]/g, '').match(/^(-?\d+)\.(\d{2})$/);
+export function parseUsdMinor(value: string): number {
+  const match = value
+    .replace(/[$,]/g, '')
+    .trim()
+    .match(/^(-)?(\d+)\.(\d{2})$/);
   if (!match) throw new Error('Could not parse USD value');
-  return Number(match[1]) * 100 + Number(match[2]);
+  const magnitude = Number(match[2]) * 100 + Number(match[3]);
+  return match[1] ? -magnitude : magnitude;
 }
 
 export async function replayCapability(
@@ -427,7 +431,7 @@ export async function replayCapability(
         const target = capability.targets[source.target];
         if (!target) throw new Error(`Unknown output target ${source.target}`);
         const text = await surface.read(target, inputs);
-        output[name] = source.parse === 'usdMinor' ? moneyToMinor(text) : text;
+        output[name] = source.parse === 'usdMinor' ? parseUsdMinor(text) : text;
       }
     }
     const outputs = parseOutputs(capability, output);

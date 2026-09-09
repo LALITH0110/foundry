@@ -12,19 +12,26 @@ function argument(name: string, fallback?: string): string | undefined {
   return index >= 0 ? process.argv[index + 1] : fallback;
 }
 
-const artifactPath = argument('--artifact', 'capabilities/prepare-stop-payment.example.json')!;
-const inputsPath = argument('--inputs', 'examples/stop-payment-success.json')!;
-const bindingPath = argument('--binding');
-const binding = bindingPath ? await loadTenantBinding(bindingPath) : undefined;
-const baseUrl = argument('--target', binding ? bindingTarget(binding) : 'http://127.0.0.1:3000/servicing')!;
+const artifactPath = argument('--artifact', 'capabilities/prepare-stop-payment.discovered.json')!;
+const inputsPath = argument('--inputs');
+if (!inputsPath) throw new Error('--inputs is required: a JSON file matching the capability input schema');
 const headed = process.argv.includes('--headed');
 
 const capability = capabilitySchema.parse(JSON.parse(await readFile(artifactPath, 'utf8')));
+const bindingPath = argument('--binding');
+const binding = bindingPath ? await loadTenantBinding(bindingPath) : undefined;
 if (binding) assertTenantBindingCompatible(capability, binding);
+const policy = await loadPolicy();
+const defaultOrigin = policy.allowedOrigins[0];
+if (!defaultOrigin) throw new Error('Policy declares no allowed origin to replay against');
+const baseUrl = argument(
+  '--target',
+  binding ? bindingTarget(binding) : new URL(capability.entry.path, defaultOrigin).toString(),
+)!;
 const inputs = parseInvocation(capability, JSON.parse(await readFile(inputsPath, 'utf8')));
 const surface = await PlaywrightSurface.launch({
   baseUrl,
-  policy: await loadPolicy(),
+  policy,
   headed,
   ...(binding ? { frameTitle: binding.frameTitle } : {}),
 });

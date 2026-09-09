@@ -1,4 +1,5 @@
 import {
+  inputValueRef,
   targetSignature,
   type ActionSpec,
   type Capability,
@@ -36,12 +37,18 @@ export function expectedInputFor(
   return step?.action.kind === 'fill' || step?.action.kind === 'select' ? step.action.value : undefined;
 }
 
+/**
+ * How each declared input renders in a UI. The engineer-authored `display` format is
+ * authoritative; a pre-authored step that already formats the same input is used as a
+ * fallback so older contracts keep working.
+ */
 export function inputDisplays(capability: Capability): Record<string, ValueRef> {
   const displays: Record<string, ValueRef> = {};
+  for (const name of Object.keys(capability.inputSchema)) displays[name] = inputValueRef(capability, name);
   for (const step of capability.steps) {
-    if ((step.action.kind === 'fill' || step.action.kind === 'select') && step.action.value.kind === 'input') {
-      displays[step.action.value.name] = step.action.value;
-    }
+    if ((step.action.kind !== 'fill' && step.action.kind !== 'select') || step.action.value.kind !== 'input') continue;
+    const declared = capability.inputSchema[step.action.value.name]?.display;
+    if (!declared) displays[step.action.value.name] = step.action.value;
   }
   return displays;
 }
@@ -64,24 +71,32 @@ export function compileCapability(
     },
   ];
 
+  let annotated = 0;
   actions.forEach((item, index) => {
     if (!item.receipt.target) throw new Error(`Discovery action ${index} has no reusable target`);
     const targetId = `discovered-target-${index + 1}`;
     targets[targetId] = item.receipt.target;
+    // A pre-authored step for the same control is engineer knowledge about that control,
+    // so it annotates the discovered step. Its absence is not an error: the model is free
+    // to find a path the engineer did not enumerate. Policy authorizes the action; the
+    // independent success predicate decides whether the run is worth saving at all.
     const contractStep = matchingContractStep(base, item.receipt.target, item.modelAction.kind);
-    if (!contractStep) {
-      throw new Error(`Executed action ${index} is outside the engineer-authored capability contract`);
-    }
+    if (contractStep) annotated += 1;
 
     let action: ActionSpec;
     if (item.modelAction.kind === 'click') {
       action = { kind: 'click', target: targetId };
     } else {
-      const contractAction = contractStep.action;
-      if (contractAction.kind !== 'fill' && contractAction.kind !== 'select') {
-        throw new Error(`Contract action for discovery step ${index} does not accept input`);
-      }
-      action = { kind: item.modelAction.kind, target: targetId, value: contractAction.value };
+      const name = item.modelAction.inputRef;
+      if (!name) throw new Error(`Discovery action ${index} supplied no input reference`);
+      const contractAction = contractStep?.action;
+      const contractValue =
+        (contractAction?.kind === 'fill' || contractAction?.kind === 'select') &&
+        contractAction.value.kind === 'input' &&
+        contractAction.value.name === name
+          ? contractAction.value
+          : undefined;
+      action = { kind: item.modelAction.kind, target: targetId, value: contractValue ?? inputValueRef(base, name) };
     }
 
     const observedPostcondition =
@@ -91,17 +106,20 @@ export function compileCapability(
     steps.push({
       id: `discovered-${index + 1}`,
       action,
-      effect: contractStep.effect,
-      ...(contractStep.precondition
+      // Without an annotation the effect is unknown, so it is recorded conservatively as
+      // reversible: replay executes it, but a reviewer must promote it before any step is
+      // treated as irreversible and gated on approval.
+      effect: contractStep?.effect ?? 'reversible',
+      ...(contractStep?.precondition
         ? { precondition: contractStep.precondition }
         : { precondition: { kind: 'urlPath' as const, path: item.receipt.beforePath } }),
-      ...(contractStep.postcondition
+      ...(contractStep?.postcondition
         ? { postcondition: contractStep.postcondition }
         : observedPostcondition
           ? { postcondition: observedPostcondition }
           : {}),
-      ...(contractStep.onTargetMissing ? { onTargetMissing: contractStep.onTargetMissing } : {}),
-      timeoutMs: contractStep.timeoutMs,
+      ...(contractStep?.onTargetMissing ? { onTargetMissing: contractStep.onTargetMissing } : {}),
+      timeoutMs: contractStep?.timeoutMs ?? 5_000,
     });
   });
 
@@ -114,7 +132,11 @@ export function compileCapability(
       kind: 'discovered',
       discoveryRunId: runId,
       model,
-      note: 'Executed steps were compiled from the model run; inputs, outputs, effects, outcomes, and success criteria are engineer-authored contract.',
+      note:
+        `Executed steps were compiled from the model run; inputs, outputs, outcomes, and success criteria are engineer-authored contract. ` +
+        (annotated === actions.length
+          ? `All ${actions.length} discovered steps matched a pre-authored control and inherited its effect and checkpoints.`
+          : `${annotated} of ${actions.length} discovered steps matched a pre-authored control and inherited its effect and checkpoints; the remaining ${actions.length - annotated} carry observed checkpoints and a conservative reversible effect pending review.`),
     },
   };
 }

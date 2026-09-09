@@ -32,7 +32,11 @@
       "required": true,
       "sensitive": true,
       "minimum": 1,
-      "maximum": 100000000
+      "maximum": 100000000,
+      "display": {
+        "kind": "minorUnits",
+        "scale": 2
+      }
     },
     "reason": {
       "type": "string",

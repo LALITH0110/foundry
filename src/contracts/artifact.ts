@@ -118,6 +118,7 @@ const capabilityStructureSchema = z
           enum: z.array(z.string()).optional(),
           minimum: z.number().int().optional(),
           maximum: z.number().int().optional(),
+          display: valueFormatSchema.optional(),
         })
         .strict(),
     ),
@@ -281,6 +282,12 @@ export const capabilitySchema = capabilityStructureSchema.superRefine((capabilit
     ) {
       issue('minimum cannot exceed maximum', ['inputSchema', name]);
     }
+    if (definition.display?.kind === 'minorUnits' && definition.type !== 'integer') {
+      issue('minorUnits display requires an integer input', ['inputSchema', name, 'display']);
+    }
+    if (definition.display?.kind === 'map' && definition.type !== 'string') {
+      issue('map display requires a string input', ['inputSchema', name, 'display']);
+    }
   }
 });
 
@@ -333,6 +340,16 @@ export function resolveValue(ref: ValueRef, inputs: Invocation): string {
   const mapped = ref.format.values[String(value)];
   if (mapped === undefined) throw new Error(`No mapped display value for input ${ref.name}`);
   return mapped;
+}
+
+/**
+ * The value reference an engineer declared for an input, independent of any step.
+ * Discovery uses this so the model can direct a typed input at a control it found
+ * itself, without a pre-authored step supplying the display format.
+ */
+export function inputValueRef(capability: Capability, name: string): ValueRef {
+  const display = capability.inputSchema[name]?.display;
+  return { kind: 'input', name, ...(display ? { format: display } : {}) };
 }
 
 export function targetSignature(target: TargetSpec): string {

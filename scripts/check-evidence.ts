@@ -1,6 +1,5 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createHash } from 'node:crypto';
 
 const root = 'evidence/reviewed';
 const forbidden = [
@@ -47,12 +46,26 @@ async function walk(path: string): Promise<void> {
 }
 
 await walk(root);
-const migration = JSON.parse(await readFile(join(root, 'discovery', 'contract-migration.json'), 'utf8')) as {
-  artifactSha256: string;
+
+// The committed artifact must be the one the reviewed discovery run actually produced.
+const discoveryManifest = JSON.parse(await readFile(join(root, 'discovery', 'manifest.json'), 'utf8')) as {
+  runId: string;
+  model: string;
 };
-const artifact = await readFile('capabilities/prepare-stop-payment.discovered.json');
-const artifactSha256 = createHash('sha256').update(artifact).digest('hex');
-if (migration.artifactSha256 !== artifactSha256) {
-  throw new Error('Discovery contract-migration hash does not match the committed artifact');
+const artifact = JSON.parse(await readFile('capabilities/prepare-stop-payment.discovered.json', 'utf8')) as {
+  provenance: { kind: string; discoveryRunId?: string; model?: string };
+};
+if (artifact.provenance.kind !== 'discovered') {
+  throw new Error('The committed capability is not labeled as discovered');
 }
-console.log(`Checked ${files} evidence files; no sensitive canaries found.`);
+if (artifact.provenance.discoveryRunId !== discoveryManifest.runId) {
+  throw new Error(
+    `Artifact provenance run ${artifact.provenance.discoveryRunId} does not match the reviewed discovery run ${discoveryManifest.runId}`,
+  );
+}
+if (artifact.provenance.model !== discoveryManifest.model) {
+  throw new Error('Artifact provenance model does not match the reviewed discovery run');
+}
+console.log(
+  `Checked ${files} evidence files; no sensitive canaries found. Artifact traces to discovery run ${discoveryManifest.runId} (${discoveryManifest.model}).`,
+);

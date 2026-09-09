@@ -6,7 +6,8 @@ import { assertTenantBindingCompatible, loadTenantBinding } from '../src/contrac
 import { assertActionAllowed, assertUrlAllowed, loadPolicy, PolicyError } from '../src/safety/policy.js';
 import { redact, redactionContextFor } from '../src/safety/redaction.js';
 import { SessionController } from '../src/runtime/session.js';
-import { expectedInputFor } from '../src/discovery/compiler.js';
+import { compileCapability, expectedInputFor } from '../src/discovery/compiler.js';
+import { parseUsdMinor } from '../src/runtime/replay-engine.js';
 
 test('example capability is schema-valid and inputs remain typed', async () => {
   const artifact = capabilitySchema.parse(
@@ -122,4 +123,85 @@ test('ownership epochs reject stale automation after human takeover', () => {
   const newAutomation = session.transfer('automation');
   assert.throws(() => session.assert(human, 'human'));
   session.assert(newAutomation, 'automation');
+});
+
+test('discovery compiles a path the engineer never pre-authored', async () => {
+  const base = capabilitySchema.parse(
+    JSON.parse(await readFile('capabilities/prepare-stop-payment.example.json', 'utf8')),
+  );
+  const preAuthored = base.targets['search-button'];
+  assert.ok(preAuthored);
+
+  const compiled = compileCapability(
+    base,
+    [
+      {
+        modelAction: { kind: 'click' },
+        receipt: {
+          action: 'click',
+          target: { kind: 'role', frame: 'workspace', role: 'link', name: 'Skip notice', exact: true },
+          beforePath: '/workspace/search',
+          afterPath: '/workspace/notice',
+        },
+        eventIndex: 0,
+      },
+      {
+        modelAction: { kind: 'click' },
+        receipt: {
+          action: 'click',
+          target: preAuthored,
+          beforePath: '/workspace/search',
+          afterPath: '/workspace/member',
+        },
+        eventIndex: 1,
+      },
+      {
+        modelAction: { kind: 'fill', inputRef: 'amountMinor' },
+        receipt: {
+          action: 'fill',
+          target: { kind: 'tableRowControl', frame: 'workspace', rowText: 'Amount override', control: 'input' },
+          beforePath: '/workspace/stop-payment',
+          afterPath: '/workspace/stop-payment',
+        },
+        eventIndex: 2,
+      },
+    ],
+    'discovery-run-under-test',
+    'test-model',
+  );
+  const artifact = capabilitySchema.parse(compiled);
+  const [, unmatchedClick, matchedClick, unmatchedFill] = artifact.steps;
+
+  // A control with no pre-authored step is still compiled, with checkpoints taken from
+  // what the run actually observed and a conservative effect.
+  assert.ok(unmatchedClick);
+  assert.equal(unmatchedClick.effect, 'reversible');
+  assert.deepEqual(unmatchedClick.precondition, { kind: 'urlPath', path: '/workspace/search' });
+  assert.deepEqual(unmatchedClick.postcondition, { kind: 'urlPath', path: '/workspace/notice' });
+
+  // A control the engineer did describe still contributes its effect and checkpoints.
+  assert.ok(matchedClick);
+  assert.equal(matchedClick.effect, 'read');
+  assert.deepEqual(matchedClick.postcondition, { kind: 'urlPath', path: '/workspace/member' });
+
+  // An unmatched fill takes its display format from the declared input, not from a step.
+  assert.ok(unmatchedFill);
+  assert.equal(unmatchedFill.action.kind, 'fill');
+  if (unmatchedFill.action.kind === 'fill') {
+    assert.deepEqual(unmatchedFill.action.value, {
+      kind: 'input',
+      name: 'amountMinor',
+      format: { kind: 'minorUnits', scale: 2 },
+    });
+  }
+  assert.match(artifact.provenance.note ?? '', /1 of 3 discovered steps matched a pre-authored control/);
+});
+
+test('USD extraction preserves sign and rejects unparseable values', () => {
+  assert.equal(parseUsdMinor('$1,234.56'), 123456);
+  assert.equal(parseUsdMinor('0.00'), 0);
+  assert.equal(parseUsdMinor('-1.50'), -150);
+  assert.equal(parseUsdMinor('$-1.50'), -150);
+  assert.throws(() => parseUsdMinor('12'), /Could not parse USD value/);
+  assert.throws(() => parseUsdMinor('1.5'), /Could not parse USD value/);
 });

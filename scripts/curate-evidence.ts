@@ -22,9 +22,14 @@ async function curate(runId: string, kind: 'discovery' | 'replay'): Promise<void
   await rewriteEvidencePaths(join(destination, 'events.jsonl'), runId, destination);
 }
 
-async function rewriteEvidencePaths(eventsPath: string, runId: string, destination: string): Promise<void> {
+/**
+ * Repoint recorded artifact paths at the curated copy. Matching on the run directory
+ * rather than the literal run id matters: redaction masks an all-numeric id segment, so
+ * the id inside an event payload does not always survive as written.
+ */
+async function rewriteEvidencePaths(eventsPath: string, _runId: string, destination: string): Promise<void> {
   const events = await readFile(eventsPath, 'utf8');
-  await writeFile(eventsPath, events.replaceAll(`evidence/runtime/${runId}/`, `${destination}/`));
+  await writeFile(eventsPath, events.replace(/evidence\/runtime\/[^"\\/\s]+\//g, `${destination}/`));
 }
 
 await curate(discoveryRunId, 'discovery');

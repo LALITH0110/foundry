@@ -1,7 +1,0 @@
-{
-  "sourceDiscoveryRunId": "e99b305d-b906-49ce-bbc4-e32d6d5582bb",
-  "artifactSha256": "df8f17600f74e24d571bae3aa32a3a22f7c42a192e3e2fc394693854d451f1b9",
-  "modelRerun": false,
-  "unchanged": "Executed UI action sequence",
-  "changed": "Engineer-authored contract metadata migrated to generic value formats, effects, recoverable handlers, and result codes"
-}
