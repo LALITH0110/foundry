@@ -1,0 +1,10 @@
+{"timestamp":"2026-09-09T17:26:13.113Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"step.started","stepId":"open-entry","action":"navigate","effect":"read","ownershipEpoch":1}
+{"timestamp":"2026-09-09T17:26:13.181Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"action.completed","stepId":"open-entry","action":"navigate","effect":"read","ownershipEpoch":1,"actionCount":1,"maxActions":25}
+{"timestamp":"2026-09-09T17:26:13.207Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"step.completed","stepId":"open-entry"}
+{"timestamp":"2026-09-09T17:26:13.214Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"step.started","stepId":"discovered-1","action":"fill","effect":"reversible","ownershipEpoch":1}
+{"timestamp":"2026-09-09T17:26:13.265Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"action.completed","stepId":"discovered-1","action":"fill","effect":"reversible","ownershipEpoch":1,"actionCount":2,"maxActions":25}
+{"timestamp":"2026-09-09T17:26:13.270Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"step.completed","stepId":"discovered-1"}
+{"timestamp":"2026-09-09T17:26:13.275Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"step.started","stepId":"discovered-2","action":"click","effect":"reversible","ownershipEpoch":1}
+{"timestamp":"2026-09-09T17:26:13.327Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"action.completed","stepId":"discovered-2","action":"click","effect":"reversible","ownershipEpoch":1,"actionCount":3,"maxActions":25}
+{"timestamp":"2026-09-09T17:26:13.338Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"step.completed","stepId":"discovered-2"}
+{"timestamp":"2026-09-09T17:26:13.400Z","runId":"829e187a-6827-49b1-a8a5-8d1fdd6b51b5","type":"run.succeeded","outputKeys":["status","memberId","memberName","accountSuffix"],"snapshot":"evidence/reviewed/lookup/replay/success.json"}

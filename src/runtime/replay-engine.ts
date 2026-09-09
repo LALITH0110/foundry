@@ -17,6 +17,12 @@ export type InterventionContext = {
 export type InterventionResolution = { approved?: boolean };
 export type ReplayOptions = {
   allowHumanHandoff?: boolean;
+  /**
+   * Run a `draft` capability anyway. Discovery compiles steps whose effect nothing
+   * declared, so a draft may contain an action inferred to be reversible that is not.
+   * Attended review sets this; an agent invoking a capability in production does not.
+   */
+  allowDraft?: boolean;
   maxInterventions?: number;
   onIntervention?: (
     surface: SurfaceAdapter,
@@ -87,9 +93,23 @@ export async function replayCapability(
   await evidence.initialize('replay', {
     capabilityId: capability.id,
     capabilityVersion: capability.version,
+    lifecycle: capability.lifecycle,
+    // Records how a draft was allowed to run at all, so evidence answers that on its own.
+    attended: options.allowDraft === true,
     modelRequests: 0,
     sessionId: surface.session.sessionId,
   });
+  if (capability.lifecycle !== 'approved' && !options.allowDraft) {
+    await evidence.event('run.refused', { code: 'CAPABILITY_NOT_APPROVED', lifecycle: capability.lifecycle });
+    return {
+      status: 'failed',
+      code: 'CAPABILITY_NOT_APPROVED',
+      expected: 'An approved capability',
+      observed: `Capability ${capability.id}@${capability.version} is ${capability.lifecycle}`,
+      evidence: [],
+      runId,
+    };
+  }
   let token = surface.session.token();
   let interventionCount = 0;
   const recoveryAttempts = new Map<string, number>();

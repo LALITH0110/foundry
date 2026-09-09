@@ -1,0 +1,9 @@
+{
+  "runId": "2b39bddf-a2aa-419d-a969-10af15b8f70a",
+  "kind": "discovery",
+  "startedAt": "2026-09-09T17:13:33.726Z",
+  "goal": "Find the member with the supplied member number and stop on the member detail screen that lists their deposit accounts",
+  "model": "qwen3:4b",
+  "target": "http://127.0.0.1:3000/servicing",
+  "maxActions": 25
+}

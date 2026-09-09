@@ -16,6 +16,7 @@ const artifactPath = argument('--artifact', 'capabilities/prepare-stop-payment.d
 const inputsPath = argument('--inputs');
 if (!inputsPath) throw new Error('--inputs is required: a JSON file matching the capability input schema');
 const headed = process.argv.includes('--headed');
+const allowDraft = process.argv.includes('--allow-draft');
 
 const capability = capabilitySchema.parse(JSON.parse(await readFile(artifactPath, 'utf8')));
 const bindingPath = argument('--binding');
@@ -39,6 +40,7 @@ const surface = await PlaywrightSurface.launch({
 try {
   const result = await replayCapability(surface, capability, inputs, {
     allowHumanHandoff: headed,
+    allowDraft,
     onIntervention: async (activeSurface, intervention) => {
       console.log(`\nAutomation paused: ${intervention.code}`);
       console.log(`Session ${activeSurface.session.sessionId} is now human-controlled.`);

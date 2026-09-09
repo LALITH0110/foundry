@@ -126,6 +126,10 @@ export function compileCapability(
   return {
     ...base,
     version: '1.0.0-discovered',
+    // A freshly discovered artifact is unreviewed by construction: steps that matched no
+    // pre-authored control carry an inferred effect. It lands as a draft, and unattended
+    // replay refuses it until a reviewer promotes it.
+    lifecycle: 'draft',
     targets: { ...targets, ...base.targets },
     steps,
     provenance: {

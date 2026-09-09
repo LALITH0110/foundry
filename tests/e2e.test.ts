@@ -461,3 +461,67 @@ for (const [index, field] of ['memberId', 'accountSuffix', 'checkNumber', 'amoun
     );
   });
 }
+
+const lookupCapability = capabilitySchema.parse(
+  JSON.parse(await readFile('capabilities/lookup-member-account.discovered.json', 'utf8')),
+);
+
+test('the lookup artifact was discovered without any pre-authored route step', async () => {
+  const contract = capabilitySchema.parse(
+    JSON.parse(await readFile('capabilities/lookup-member-account.example.json', 'utf8')),
+  );
+  // The contract declares meaning only: one entry navigation and no UI route.
+  assert.equal(contract.steps.length, 1);
+  assert.equal(contract.steps[0]?.action.kind, 'navigate');
+  // So every executed step in the artifact came from the model, and none could inherit
+  // an engineer-authored effect.
+  assert.equal(lookupCapability.provenance.kind, 'discovered');
+  assert.match(lookupCapability.provenance.note ?? '', /^.*0 of \d+ discovered steps matched/);
+  for (const step of lookupCapability.steps.slice(1)) assert.equal(step.effect, 'reversible');
+});
+
+test('unattended replay refuses a draft capability before acting', async () => {
+  await withSurface(3150, 'normal', async (surface) => {
+    const inputs = parseInvocation(
+      lookupCapability,
+      JSON.parse(await readFile('examples/member-lookup-replay.json', 'utf8')),
+    );
+    assert.equal(lookupCapability.lifecycle, 'draft');
+    const result = await replayCapability(surface, lookupCapability, inputs);
+    assert.deepEqual(
+      { status: result.status, code: 'code' in result ? result.code : undefined },
+      { status: 'failed', code: 'CAPABILITY_NOT_APPROVED' },
+    );
+    // Refusal happens before any UI action, so the session budget is untouched.
+    assert.equal(surface.actionCount, 0);
+  });
+});
+
+test('an approved copy of the draft replays and extracts a value that is not an input', async () => {
+  await withSurface(3151, 'normal', async (surface) => {
+    const approved = capabilitySchema.parse({ ...lookupCapability, lifecycle: 'approved' });
+    const inputs = parseInvocation(approved, JSON.parse(await readFile('examples/member-lookup-replay.json', 'utf8')));
+    const result = await replayCapability(surface, approved, inputs);
+    assert.equal(result.status, 'success');
+    if (result.status === 'success') {
+      assert.equal(result.outputs.status, 'member_verified');
+      assert.equal(result.outputs.memberId, '20002');
+      // memberName is read off the live screen; no invocation supplied it.
+      assert.equal(result.outputs.memberName, 'Riley Example');
+    }
+  });
+});
+
+test('the draft lookup capability still classifies a known business outcome', async () => {
+  await withSurface(3152, 'normal', async (surface) => {
+    const inputs = parseInvocation(
+      lookupCapability,
+      JSON.parse(await readFile('examples/member-lookup-not-found.json', 'utf8')),
+    );
+    const result = await replayCapability(surface, lookupCapability, inputs, { allowDraft: true });
+    assert.deepEqual(
+      { status: result.status, code: 'code' in result ? result.code : undefined },
+      { status: 'business_outcome', code: 'MEMBER_NOT_FOUND' },
+    );
+  });
+});

@@ -1,0 +1,28 @@
+{
+  "revision": 1,
+  "path": "/workspace/member",
+  "title": "Member detail · LegacyBank CoreServicing",
+  "controls": [
+    {
+      "kind": "link",
+      "name": "Open account",
+      "allowedActions": [
+        "click"
+      ]
+    },
+    {
+      "kind": "link",
+      "name": "Open account",
+      "allowedActions": [
+        "click"
+      ]
+    },
+    {
+      "kind": "link",
+      "name": "New search",
+      "allowedActions": [
+        "click"
+      ]
+    }
+  ]
+}

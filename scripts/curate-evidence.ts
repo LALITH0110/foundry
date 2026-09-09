@@ -1,14 +1,27 @@
 import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const [discoveryRunId, replayRunId] = process.argv.slice(2);
+const positional = process.argv.slice(2).filter((value) => value !== '--into' && !intoValue(value));
+const [discoveryRunId, replayRunId] = positional;
 if (!discoveryRunId || !replayRunId) {
-  throw new Error('Usage: npm run curate:evidence -- <discovery-run-id> <replay-run-id>');
+  throw new Error(
+    'Usage: npm run curate:evidence -- <discovery-run-id> <replay-run-id> [--into <subdir>] [name=<run-id> ...]',
+  );
 }
+
+/** `--into <subdir>` files a second capability's pair under evidence/reviewed/<subdir>/. */
+function intoValue(value: string): boolean {
+  const index = process.argv.indexOf('--into');
+  return index >= 0 && process.argv[index + 1] === value;
+}
+const intoIndex = process.argv.indexOf('--into');
+const into = intoIndex >= 0 ? process.argv[intoIndex + 1] : undefined;
+if (into !== undefined && !/^[a-z-]+$/.test(into)) throw new Error(`Invalid --into subdirectory: ${into}`);
+const reviewedRoot = into ? join('evidence/reviewed', into) : 'evidence/reviewed';
 
 async function curate(runId: string, kind: 'discovery' | 'replay'): Promise<void> {
   const source = join('evidence/runtime', runId);
-  const destination = join('evidence/reviewed', kind);
+  const destination = join(reviewedRoot, kind);
   const manifest = JSON.parse(await readFile(join(source, 'manifest.json'), 'utf8')) as Record<string, unknown>;
   if (manifest.kind !== kind) throw new Error(`${runId} is not a ${kind} run`);
   if (kind === 'replay' && manifest.modelRequests !== 0)
@@ -34,7 +47,7 @@ async function rewriteEvidencePaths(eventsPath: string, _runId: string, destinat
 
 await curate(discoveryRunId, 'discovery');
 await curate(replayRunId, 'replay');
-for (const specification of process.argv.slice(4)) {
+for (const specification of positional.slice(2)) {
   const [name, runId] = specification.split('=');
   if (!name || !runId || !/^[a-z-]+$/.test(name)) throw new Error(`Invalid scenario specification: ${specification}`);
   const source = join('evidence/runtime', runId);

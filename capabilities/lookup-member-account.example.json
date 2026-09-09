@@ -1,0 +1,214 @@
+{
+  "schemaVersion": "1.0",
+  "id": "lookup_member_account",
+  "version": "1.0.0-example",
+  "description": "Look up a member by member number and confirm a specific deposit account exists on their profile.",
+  "vendor": "LegacyBank CoreServicing",
+  "compatibleVersions": ["7.4"],
+  "lifecycle": "draft",
+  "entry": {
+    "path": "/servicing"
+  },
+  "inputSchema": {
+    "memberId": {
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "pattern": "^\\d{5}$"
+    },
+    "accountSuffix": {
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "pattern": "^\\d{4}$"
+    }
+  },
+  "outputSchema": {
+    "status": {
+      "type": "string"
+    },
+    "memberId": {
+      "type": "string",
+      "sensitive": true
+    },
+    "memberName": {
+      "type": "string",
+      "sensitive": true
+    },
+    "accountSuffix": {
+      "type": "string",
+      "sensitive": true
+    }
+  },
+  "targets": {
+    "member-id-value": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Member number"
+    },
+    "member-name-value": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Member name"
+    },
+    "account-link": {
+      "kind": "tableRowLink",
+      "frame": "workspace",
+      "rowTexts": [
+        {
+          "kind": "input",
+          "name": "accountSuffix"
+        }
+      ],
+      "linkName": "Open account"
+    },
+    "member-not-found": {
+      "kind": "text",
+      "frame": "workspace",
+      "text": "No member was found for that member number.",
+      "exact": true
+    },
+    "session-expired": {
+      "kind": "text",
+      "frame": "workspace",
+      "text": "Session expired",
+      "exact": true
+    },
+    "app-error": {
+      "kind": "text",
+      "frame": "workspace",
+      "text": "CORE-503: The servicing host is temporarily unavailable.",
+      "exact": true
+    },
+    "known-interstitial": {
+      "kind": "text",
+      "frame": "workspace",
+      "text": "Account notice",
+      "exact": true
+    },
+    "dismiss-interstitial": {
+      "kind": "role",
+      "frame": "workspace",
+      "role": "link",
+      "name": "Continue",
+      "exact": true
+    }
+  },
+  "steps": [
+    {
+      "id": "open-entry",
+      "action": {
+        "kind": "navigate",
+        "path": "/servicing"
+      },
+      "postcondition": {
+        "kind": "urlPath",
+        "path": "/workspace/search"
+      },
+      "timeoutMs": 5000,
+      "effect": "read"
+    }
+  ],
+  "handlers": [
+    {
+      "id": "known-interstitial",
+      "when": {
+        "kind": "visible",
+        "target": "known-interstitial"
+      },
+      "result": {
+        "status": "recoverable",
+        "action": {
+          "kind": "click",
+          "target": "dismiss-interstitial"
+        },
+        "postcondition": {
+          "kind": "urlPath",
+          "path": "/workspace/member"
+        },
+        "maxAttempts": 1
+      }
+    },
+    {
+      "id": "member-not-found",
+      "when": {
+        "kind": "visible",
+        "target": "member-not-found"
+      },
+      "result": {
+        "status": "business_outcome",
+        "code": "MEMBER_NOT_FOUND"
+      }
+    },
+    {
+      "id": "session-expired",
+      "when": {
+        "kind": "visible",
+        "target": "session-expired"
+      },
+      "result": {
+        "status": "intervention_required",
+        "code": "SESSION_EXPIRED"
+      }
+    },
+    {
+      "id": "app-error",
+      "when": {
+        "kind": "visible",
+        "target": "app-error"
+      },
+      "result": {
+        "status": "failed",
+        "code": "APP_ERROR"
+      }
+    }
+  ],
+  "success": {
+    "predicate": {
+      "kind": "all",
+      "checks": [
+        {
+          "kind": "urlPath",
+          "path": "/workspace/member"
+        },
+        {
+          "kind": "textEquals",
+          "target": "member-id-value",
+          "value": {
+            "kind": "input",
+            "name": "memberId"
+          }
+        },
+        {
+          "kind": "visible",
+          "target": "account-link"
+        }
+      ]
+    },
+    "outputs": {
+      "status": {
+        "kind": "constant",
+        "value": "member_verified"
+      },
+      "memberId": {
+        "kind": "extract",
+        "target": "member-id-value",
+        "parse": "text"
+      },
+      "memberName": {
+        "kind": "extract",
+        "target": "member-name-value",
+        "parse": "text"
+      },
+      "accountSuffix": {
+        "kind": "input",
+        "name": "accountSuffix"
+      }
+    }
+  },
+  "policyProfile": "legacybank-review-only-v1",
+  "provenance": {
+    "kind": "example",
+    "note": "Engineer-authored contract. It declares meaning only: typed inputs and outputs, known outcomes, and the success predicate. It pre-authors no route beyond the entry navigation, so every UI step in the discovered artifact comes from the model."
+  }
+}

@@ -106,6 +106,9 @@ const capabilityStructureSchema = z
     description: z.string(),
     vendor: z.string(),
     compatibleVersions: z.array(z.string()),
+    // Discovery always writes `draft`. Promotion to `approved` is a reviewer decision
+    // recorded by editing this one field; unattended replay refuses anything else.
+    lifecycle: z.enum(['draft', 'approved']).default('draft'),
     entry: z.object({ path: z.string().startsWith('/') }).strict(),
     inputSchema: z.record(
       z.string(),

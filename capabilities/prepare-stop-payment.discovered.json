@@ -5,6 +5,7 @@
   "description": "Prepare a synthetic stop-payment request and stop at review without submitting it.",
   "vendor": "LegacyBank CoreServicing",
   "compatibleVersions": ["7.4"],
+  "lifecycle": "approved",
   "entry": {
     "path": "/servicing"
   },

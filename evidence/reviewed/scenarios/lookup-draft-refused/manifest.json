@@ -1,0 +1,11 @@
+{
+  "runId": "f3c6620e-5c4c-43f5-bb94-134a85445344",
+  "kind": "replay",
+  "startedAt": "2026-09-09T17:26:13.988Z",
+  "capabilityId": "lookup_member_account",
+  "capabilityVersion": "1.0.0-discovered",
+  "lifecycle": "draft",
+  "attended": false,
+  "modelRequests": 0,
+  "sessionId": "e9171640-d1a6-4b6b-a11d-40fe305e7e86"
+}

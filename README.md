@@ -24,7 +24,9 @@ The model exists only on the discovery branch. Replay loads capability JSON and 
 
 - A bounded observe → decide → act loop using a local Ollama model, structured responses, and a 30-second request timeout.
 - A Playwright surface adapter that operates the rendered UI inside a frame.
-- Versioned JSON capabilities whose input/output schemas, generic value formats, effects, targets, handlers, checkpoints, and provenance are validated as one authoritative contract.
+- Versioned JSON capabilities whose input/output schemas, generic value formats, effects, targets, handlers, checkpoints, lifecycle, and provenance are validated as one authoritative contract.
+- Two model-discovered capabilities, one of which was discovered from a contract that pre-authors no route at all.
+- A `draft` → `approved` lifecycle: discovery always emits a draft, and unattended replay refuses one.
 - A deterministic replay interpreter whose dependency graph has no model adapter.
 - Explicit business outcomes, bounded recoverable conditions, and hard failures.
 - An external policy gate that checks origins, blocked routes, operations, the actual resolved control and destination, and a session-wide action budget that persists across recovery.
@@ -32,7 +34,7 @@ The model exists only on the discovery branch. Replay loads capability JSON and 
 - One-attempt automatic recovery for known interstitials, followed by escalation when recovery fails.
 - Per-step read/reversible/irreversible effects, explicit approval for irreversible actions, same-session handoff, ownership epochs, and engine-validated resume.
 - Restrictive tenant bindings, demonstrated by running the same artifact against Cedar and Harbor branded variants.
-- Tests for parameterized replay, business outcomes, state reclassification, output corruption, policy denial, redaction, ownership races, handoff, tenant reuse, and compilation of a route the engineer never pre-authored.
+- Tests for parameterized replay, business outcomes, state reclassification, output corruption, policy denial, redaction, ownership races, handoff, tenant reuse, the approval gate, and compilation of a route the engineer never pre-authored.
 
 The generated IDs and table-based markup in LegacyBank are intentional. Replay locates controls through stable user-facing relationships such as a caption's table row and an account suffix, never those IDs.
 
@@ -92,7 +94,26 @@ The committed artifact is the direct output of the reviewed Qwen run linked belo
 
 Qwen3 4B was chosen because it runs locally at zero service cost, keeps regulated-style synthetic inputs on the machine, and is easy to reproduce. The model sees a pre-filtered list of policy-allowed actions rather than the whole browser as an unconstrained tool. That narrow action space is both what lets a small model succeed and the safety boundary: the prompt names no forbidden control, because forbidden controls never reach the model. `Submit stop payment` is removed from the observation by the policy gate and is not resolvable by the executor, so the guardrail holds whatever the model asks for.
 
-### 2. Stop Ollama and replay with different inputs
+### 2. Discover a second capability that has no pre-authored route
+
+The stop-payment contract pre-authors the whole route, so its discovered artifact reports that every step matched a known control. To show discovery is not retracing a map, the second contract declares **meaning only** — typed inputs and outputs, known outcomes, and the success predicate — and pre-authors no UI step beyond the entry navigation.
+
+```bash
+OLLAMA_NO_CLOUD=1 npm run discover -- \
+  --contract capabilities/lookup-member-account.example.json \
+  --goal "Find the member with the supplied member number and stop on the member detail screen that lists their deposit accounts" \
+  --inputs examples/member-lookup-success.json \
+  --out capabilities/lookup-member-account.discovered.json \
+  --model qwen3:4b
+```
+
+The committed result reports what that implies:
+
+> 0 of 2 discovered steps matched a pre-authored control and inherited its effect and checkpoints; the remaining 2 carry observed checkpoints and a conservative reversible effect pending review.
+
+Both UI steps, both targets, and both checkpoints came from the model's run. Because nothing declared what those steps do, the artifact is written as a **draft**.
+
+### 3. Stop Ollama and replay with different inputs
 
 ```bash
 npm run replay -- \
@@ -102,7 +123,7 @@ npm run replay -- \
 
 The result includes UI-extracted values and the evidence run ID. The reviewed proof used check `9021`, amount `$87.42`, and reason `stolen` after Ollama was stopped. Its [replay manifest](./evidence/reviewed/replay/manifest.json) reports `modelRequests: 0`.
 
-### 3. Exercise a known business outcome
+### 4. Exercise a known business outcome
 
 ```bash
 npm run demo:not-found
@@ -110,7 +131,7 @@ npm run demo:not-found
 
 This returns `MEMBER_NOT_FOUND` as a typed business result rather than a crash.
 
-### 4. Replay the same artifact for another tenant
+### 5. Replay the same artifact for another tenant
 
 Start the target as the Harbor variant:
 
@@ -129,7 +150,7 @@ npm run replay -- \
 
 The binding can select an allowed origin, entry path, and frame title. It is checked against the artifact vendor and version and cannot add code or relax policy.
 
-### 5. Exercise same-session human handoff
+### 6. Exercise same-session human handoff
 
 Stop the normal target, then launch the expiry scenario:
 
@@ -172,7 +193,7 @@ npm run check:evidence
 npm audit
 ```
 
-`npm test` runs 33 contract and browser-level acceptance tests against isolated local target servers and real headless Chromium instances. It does not invoke a model. Fault and handoff evidence is produced by this deterministic harness with scripted operator callbacks; `npm run demo:handoff` is the separate manual path. The reviewed [discovery](./evidence/reviewed/discovery/manifest.json), [model-free replay](./evidence/reviewed/replay/manifest.json), and scenario runs are committed under `evidence/reviewed/`.
+`npm test` runs 37 contract and browser-level acceptance tests against isolated local target servers and real headless Chromium instances. It does not invoke a model. Fault and handoff evidence is produced by this deterministic harness with scripted operator callbacks; `npm run demo:handoff` is the separate manual path. The reviewed [discovery](./evidence/reviewed/discovery/manifest.json), [model-free replay](./evidence/reviewed/replay/manifest.json), [second-capability discovery](./evidence/reviewed/lookup/discovery/manifest.json), and scenario runs are committed under `evidence/reviewed/`. [`evidence/README.md`](./evidence/README.md) indexes every run and what it proves.
 
 List the callable capabilities as agent-facing function definitions:
 
@@ -180,7 +201,46 @@ List the callable capabilities as agent-facing function definitions:
 npm run catalog
 ```
 
-The catalog derives parameter and result schemas from each validated artifact, so an agent can discover a capability without importing its UI implementation.
+The catalog derives parameter and result schemas from each validated artifact, so an agent can discover a capability without importing its UI implementation. It lists both capabilities and marks the draft one `callable: false`.
+
+## Capability lifecycle
+
+Every capability carries a `lifecycle` of `draft` or `approved`.
+
+Discovery always writes `draft`. That is not a formality: a step that matched no pre-authored control has an _inferred_ effect, recorded conservatively as `reversible` because nothing declared otherwise. An inference is not a safety property, so an unreviewed artifact is not something an agent should fire unattended at a banking UI.
+
+`replayCapability` refuses a draft before it takes any action, and the refusal is a typed result rather than a crash:
+
+```bash
+npm run replay -- \
+  --artifact capabilities/lookup-member-account.discovered.json \
+  --inputs examples/member-lookup-replay.json
+```
+
+```json
+{
+  "status": "failed",
+  "code": "CAPABILITY_NOT_APPROVED",
+  "observed": "Capability lookup_member_account@1.0.0-discovered is draft"
+}
+```
+
+Attended review passes `--allow-draft` (or `allowDraft` in the engine options) to run it anyway:
+
+```bash
+npm run replay -- \
+  --artifact capabilities/lookup-member-account.discovered.json \
+  --inputs examples/member-lookup-replay.json \
+  --allow-draft
+```
+
+Promotion is a deliberate human act, and today it is a manual one: a reviewer reads the provenance note, confirms the effect and checkpoints of each unannotated step, and edits `lifecycle` to `approved`. That is the only field a reviewer changes, and re-running discovery resets it to `draft`. `npm run catalog` reports `lifecycle` and `callable` per capability, so the agent-facing surface shows a draft as not production-callable.
+
+The committed lookup capability is deliberately left as a `draft` so the gate is visible in the repository, and `lookup-member-account.example.json` is a draft too — it declares no route, so it is a contract to discover from, not something callable. `prepare-stop-payment.discovered.json` is `approved`: its provenance records that all seven steps matched pre-authored controls, so no step carried an inferred effect for a reviewer to resolve. Its example contract stays `approved` because it is a complete, engineer-authored artifact used as a test fixture.
+
+Replay manifests record `lifecycle` and `attended`, so a run of a draft carries the reason it was permitted.
+
+What is missing is the workflow around that state — a reviewer UI, a recorded approver identity, and a per-step sign-off rather than one field. The schema already carries the version, effects, and provenance split such a gate would read.
 
 ## Artifact contract
 
@@ -189,11 +249,11 @@ The authoritative format is JSON validated by Zod. It contains four kinds of inf
 1. Callable contract: identity, version, typed inputs and their UI display formats, typed outputs, and compatibility.
 2. UI program: targets, ordered actions, effect annotations, preconditions, postconditions, and bounded timeouts.
 3. Runtime semantics: business outcomes, bounded recoveries, hard failures, approvals, and the final success predicate.
-4. Governance: policy profile and provenance linking discovered steps to a real run.
+4. Governance: lifecycle state, policy profile, and provenance linking discovered steps to a real run.
 
 Artifacts contain parameter references such as `memberId`, not invocation values. They cannot embed JavaScript, selectors supplied by a model, network requests, shell commands, or permission grants.
 
-`capabilities/prepare-stop-payment.example.json` is an engineer-authored bootstrap artifact used for tests and is labeled accordingly. It is not passed off as model-generated evidence.
+The `*.example.json` contracts are engineer-authored and labeled accordingly; neither is passed off as model-generated evidence. `prepare-stop-payment.example.json` pre-authors a full route and doubles as a test fixture. `lookup-member-account.example.json` pre-authors none, which is what makes its discovered counterpart evidence that the model found the route.
 
 ## Safety model
 
@@ -212,7 +272,7 @@ src/runtime/       replay and ownership state machine
 src/safety/        allowlist and redaction
 src/surfaces/      Playwright adapter
 target/            synthetic LegacyBank UI
-capabilities/      bootstrap and discovered artifacts
+capabilities/      engineer-authored contracts and discovered artifacts
 examples/          synthetic invocation inputs
 evidence/          reviewed run evidence
 tests/             contract and browser-level acceptance tests

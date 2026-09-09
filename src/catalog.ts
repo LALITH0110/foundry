@@ -36,7 +36,12 @@ export function toAgentTool(capability: Capability) {
         ),
         required: Object.keys(capability.outputSchema),
       },
-      'x-capability': { version: capability.version, policyProfile: capability.policyProfile },
+      'x-capability': {
+        version: capability.version,
+        lifecycle: capability.lifecycle,
+        callable: capability.lifecycle === 'approved',
+        policyProfile: capability.policyProfile,
+      },
     },
   };
 }

@@ -47,25 +47,34 @@ async function walk(path: string): Promise<void> {
 
 await walk(root);
 
-// The committed artifact must be the one the reviewed discovery run actually produced.
-const discoveryManifest = JSON.parse(await readFile(join(root, 'discovery', 'manifest.json'), 'utf8')) as {
-  runId: string;
-  model: string;
-};
-const artifact = JSON.parse(await readFile('capabilities/prepare-stop-payment.discovered.json', 'utf8')) as {
-  provenance: { kind: string; discoveryRunId?: string; model?: string };
-};
-if (artifact.provenance.kind !== 'discovered') {
-  throw new Error('The committed capability is not labeled as discovered');
-}
-if (artifact.provenance.discoveryRunId !== discoveryManifest.runId) {
-  throw new Error(
-    `Artifact provenance run ${artifact.provenance.discoveryRunId} does not match the reviewed discovery run ${discoveryManifest.runId}`,
+// Every committed discovered artifact must be the one its reviewed discovery run produced.
+const discoveredArtifacts = [
+  { artifact: 'capabilities/prepare-stop-payment.discovered.json', evidence: join(root, 'discovery') },
+  { artifact: 'capabilities/lookup-member-account.discovered.json', evidence: join(root, 'lookup', 'discovery') },
+];
+
+for (const { artifact: artifactPath, evidence } of discoveredArtifacts) {
+  const manifest = JSON.parse(await readFile(join(evidence, 'manifest.json'), 'utf8')) as {
+    runId: string;
+    model: string;
+  };
+  const artifact = JSON.parse(await readFile(artifactPath, 'utf8')) as {
+    lifecycle?: string;
+    provenance: { kind: string; discoveryRunId?: string; model?: string };
+  };
+  if (artifact.provenance.kind !== 'discovered') {
+    throw new Error(`${artifactPath} is not labeled as discovered`);
+  }
+  if (artifact.provenance.discoveryRunId !== manifest.runId) {
+    throw new Error(
+      `${artifactPath} provenance run ${artifact.provenance.discoveryRunId} does not match reviewed discovery run ${manifest.runId}`,
+    );
+  }
+  if (artifact.provenance.model !== manifest.model) {
+    throw new Error(`${artifactPath} provenance model does not match its reviewed discovery run`);
+  }
+  console.log(
+    `${artifactPath} traces to discovery run ${manifest.runId} (${manifest.model}), lifecycle ${artifact.lifecycle ?? 'draft'}.`,
   );
 }
-if (artifact.provenance.model !== discoveryManifest.model) {
-  throw new Error('Artifact provenance model does not match the reviewed discovery run');
-}
-console.log(
-  `Checked ${files} evidence files; no sensitive canaries found. Artifact traces to discovery run ${discoveryManifest.runId} (${discoveryManifest.model}).`,
-);
+console.log(`Checked ${files} evidence files; no sensitive canaries found.`);
