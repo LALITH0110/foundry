@@ -1,6 +1,20 @@
 # 1. Architecture
 
-Foundry is a local vertical slice with three processes: LegacyBank, an intentionally awkward synthetic banking UI; Ollama, used only during discovery; and the runner, which owns one Playwright browser session and separates observation and UI mechanics (`SurfaceAdapter`), model decisions, policy, execution, compilation, replay, evidence, and ownership transfer.
+```mermaid
+flowchart LR
+    G[Goal + typed inputs] --> D[Discovery loop]
+    M[Local Ollama model] --> D
+    D --> X[Policy-gated executor]
+    X --> B[Playwright browser session]
+    B --> L[LegacyBank UI]
+    X --> C[Trace compiler]
+    C --> A[Versioned capability JSON]
+    A --> R[Deterministic replay]
+    R --> X
+    X --> E[Redacted evidence]
+```
+
+Foundry is a local vertical slice with three processes: LegacyBank, an intentionally awkward synthetic banking UI; Ollama, used only during discovery; and the runner, which owns one Playwright browser session and keeps each box above behind its own seam — notably `SurfaceAdapter` for observation and UI mechanics. Only the discovery branch reaches a model.
 
 Discovery gives the model a bounded description of the rendered UI and asks for one schema-constrained action under a 30-second deadline. The same executor replay uses re-validates control, policy, ownership, and budget before the real click, fill, or selection. Completion is only a proposal: code independently verifies every review value, and the compiler consumes execution receipts, not a model-written transcript.
 
@@ -12,7 +26,7 @@ That leaves discovered steps whose semantics nothing declared. Where a step matc
 
 The runner gives the model only a pre-filtered list of policy-allowed controls. That constrained action space is both why a small local model is adequate and part of the safety design: the prompt names no forbidden control, because forbidden controls are removed from the observation and are not resolvable by the executor. A guardrail the model is merely asked to respect is not one.
 
-Replay is a separate entry point that does not import the Ollama adapter; it interprets saved capability JSON through the same surface, policy, and executor. A single process makes session ownership and handoff real without infrastructure the assignment does not require.
+Replay is a separate entry point that does not import the Ollama adapter; it interprets saved capability JSON through the same surface, policy, and executor. A single process makes ownership and handoff real without infrastructure the assignment does not require.
 
 # 2. Artifact schema
 
