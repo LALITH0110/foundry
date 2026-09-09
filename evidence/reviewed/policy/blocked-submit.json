@@ -1,0 +1,7 @@
+{
+  "policyProfile": "legacybank-review-only-v1",
+  "action": "click",
+  "control": "Submit stop payment",
+  "result": "POLICY_DENIED",
+  "verifiedBy": "tests/contracts.test.ts and tests/e2e.test.ts"
+}

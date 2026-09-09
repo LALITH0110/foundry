@@ -1,0 +1,9 @@
+{"timestamp":"2026-09-09T15:50:15.005Z","runId":"73d01b67-c00c-4a54-9fcd-573893f2fb36","type":"step.started","stepId":"open-entry","action":"navigate","effect":"read","ownershipEpoch":1}
+{"timestamp":"2026-09-09T15:50:15.024Z","runId":"73d01b67-c00c-4a54-9fcd-573893f2fb36","type":"action.completed","stepId":"open-entry","action":"navigate","effect":"read","ownershipEpoch":1,"actionCount":1,"maxActions":25}
+{"timestamp":"2026-09-09T15:50:15.048Z","runId":"73d01b67-c00c-4a54-9fcd-573893f2fb36","type":"step.completed","stepId":"open-entry"}
+{"timestamp":"2026-09-09T15:50:15.055Z","runId":"73d01b67-c00c-4a54-9fcd-573893f2fb36","type":"step.started","stepId":"discovered-1","action":"fill","effect":"reversible","ownershipEpoch":1}
+{"timestamp":"2026-09-09T15:50:15.078Z","runId":"73d01b67-c00c-4a54-9fcd-573893f2fb36","type":"action.completed","stepId":"discovered-1","action":"fill","effect":"reversible","ownershipEpoch":1,"actionCount":2,"maxActions":25}
+{"timestamp":"2026-09-09T15:50:15.083Z","runId":"73d01b67-c00c-4a54-9fcd-573893f2fb36","type":"step.completed","stepId":"discovered-1"}
+{"timestamp":"2026-09-09T15:50:15.087Z","runId":"73d01b67-c00c-4a54-9fcd-573893f2fb36","type":"step.started","stepId":"discovered-2","action":"click","effect":"read","ownershipEpoch":1}
+{"timestamp":"2026-09-09T15:50:17.095Z","runId":"73d01b67-c00c-4a54-9fcd-573893f2fb36","type":"action.completed","stepId":"discovered-2","action":"click","effect":"read","ownershipEpoch":1,"actionCount":3,"maxActions":25}
+{"timestamp":"2026-09-09T15:50:17.118Z","runId":"73d01b67-c00c-4a54-9fcd-573893f2fb36","type":"handler.matched","stepId":"discovered-2","handlerId":"member-not-found","result":{"status":"business_outcome","code":"MEMBER_NOT_FOUND"}}

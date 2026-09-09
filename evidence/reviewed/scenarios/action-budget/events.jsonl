@@ -1,0 +1,5 @@
+{"timestamp":"2026-09-09T15:50:42.733Z","runId":"1d059766-0141-47cc-986d-478b4a80531a","type":"step.started","stepId":"open-entry","action":"navigate","effect":"read","ownershipEpoch":1}
+{"timestamp":"2026-09-09T15:50:42.755Z","runId":"1d059766-0141-47cc-986d-478b4a80531a","type":"action.completed","stepId":"open-entry","action":"navigate","effect":"read","ownershipEpoch":1,"actionCount":1,"maxActions":1}
+{"timestamp":"2026-09-09T15:50:42.781Z","runId":"1d059766-0141-47cc-986d-478b4a80531a","type":"step.completed","stepId":"open-entry"}
+{"timestamp":"2026-09-09T15:50:42.786Z","runId":"1d059766-0141-47cc-986d-478b4a80531a","type":"step.started","stepId":"discovered-1","action":"fill","effect":"reversible","ownershipEpoch":1}
+{"timestamp":"2026-09-09T15:50:42.874Z","runId":"1d059766-0141-47cc-986d-478b4a80531a","type":"run.failed","code":"POLICY_DENIED","error":"Action budget exceeded: attempted 2, maximum 1"}

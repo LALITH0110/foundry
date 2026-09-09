@@ -1,0 +1,27 @@
+{
+  "revision": 1,
+  "path": "/workspace/search",
+  "title": "Member search · LegacyBank CoreServicing",
+  "controls": [
+    {
+      "kind": "input",
+      "name": "memberId",
+      "allowedActions": [
+        "fill"
+      ]
+    },
+    {
+      "kind": "button",
+      "name": "Search member",
+      "allowedActions": [],
+      "blockedReason": "form_incomplete"
+    },
+    {
+      "kind": "button",
+      "name": "Clear",
+      "allowedActions": [
+        "click"
+      ]
+    }
+  ]
+}

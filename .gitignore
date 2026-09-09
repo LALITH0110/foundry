@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.DS_Store
+playwright-report/
+test-results/
+evidence/runtime/
+*.log
+Assignment A — Computer-Use Automation System.pdf

@@ -1,0 +1,14 @@
+{
+  "revision": 1,
+  "path": "/auth/expired",
+  "title": "Session expired · LegacyBank CoreServicing",
+  "controls": [
+    {
+      "kind": "button",
+      "name": "Restore synthetic session",
+      "allowedActions": [
+        "click"
+      ]
+    }
+  ]
+}

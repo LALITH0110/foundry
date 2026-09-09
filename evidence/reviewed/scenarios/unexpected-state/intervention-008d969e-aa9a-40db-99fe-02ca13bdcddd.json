@@ -1,0 +1,14 @@
+{
+  "revision": 1,
+  "path": "/workspace/member",
+  "title": "Unexpected dialog · LegacyBank CoreServicing",
+  "controls": [
+    {
+      "kind": "link",
+      "name": "Continue",
+      "allowedActions": [
+        "click"
+      ]
+    }
+  ]
+}

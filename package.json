@@ -1,0 +1,35 @@
+{
+  "name": "foundry-computer-use",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Discover a legacy UI workflow once, then replay it deterministically without an LLM.",
+  "scripts": {
+    "target": "node --import tsx target/server.ts",
+    "discover": "node --import tsx src/discover.ts",
+    "replay": "node --import tsx src/replay.ts",
+    "demo:success": "node --import tsx src/replay.ts --inputs examples/stop-payment-success.json",
+    "demo:not-found": "node --import tsx src/replay.ts --inputs examples/stop-payment-not-found.json",
+    "demo:handoff": "node --import tsx src/replay.ts --inputs examples/stop-payment-success.json --headed",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "curate:evidence": "node --import tsx scripts/curate-evidence.ts",
+    "check:evidence": "node --import tsx scripts/check-evidence.ts",
+    "catalog": "node --import tsx src/catalog.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "dependencies": {
+    "playwright": "1.63.0",
+    "zod": "4.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.1",
+    "prettier": "^3.6.2",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2"
+  }
+}

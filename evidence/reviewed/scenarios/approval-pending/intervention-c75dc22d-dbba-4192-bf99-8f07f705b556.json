@@ -1,0 +1,42 @@
+{
+  "revision": 1,
+  "path": "/workspace/stop-payment",
+  "title": "Prepare stop payment · LegacyBank CoreServicing",
+  "controls": [
+    {
+      "kind": "input",
+      "name": "checkNumber",
+      "allowedActions": [],
+      "matchesInput": "checkNumber",
+      "blockedReason": "completed"
+    },
+    {
+      "kind": "input",
+      "name": "amount",
+      "allowedActions": [
+        "fill"
+      ]
+    },
+    {
+      "kind": "select",
+      "name": "Choose a reasonLost checkStolen checkOther",
+      "allowedActions": [],
+      "matchesInput": "reason",
+      "blockedReason": "completed"
+    },
+    {
+      "kind": "button",
+      "name": "Continue to review",
+      "allowedActions": [
+        "click"
+      ]
+    },
+    {
+      "kind": "link",
+      "name": "Cancel",
+      "allowedActions": [
+        "click"
+      ]
+    }
+  ]
+}

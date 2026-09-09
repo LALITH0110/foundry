@@ -1,0 +1,69 @@
+# 1. Architecture
+
+Foundry is a local vertical slice with three processes: LegacyBank, an intentionally awkward synthetic banking UI; Ollama, used only during discovery; and the Foundry runner, which owns one Playwright browser session. The runner separates observation and UI mechanics (`SurfaceAdapter`), model decisions, policy, action execution, artifact compilation, deterministic replay, evidence, and ownership transfer.
+
+Discovery gives the model a bounded description of the rendered UI and asks for one schema-constrained action. Each request has a 30-second deadline. The shared executor validates an observation-local control, policy, ownership, and the session-wide action budget before it performs the real click, fill, or selection. Completion is only a proposal: code independently verifies the requested member and every review value. The compiler consumes execution receipts rather than a model-written transcript.
+
+Qwen3 4B keeps the demonstration local, free to run, reproducible, and suitable for regulated-data boundaries. The runner gives it only a pre-filtered list of policy-allowed controls and input references derived from the contract. That constrained action space is both why a small model is adequate and part of the safety design.
+
+Replay is a separate entry point that does not import the Ollama adapter. It interprets saved capability JSON through the same surface, policy, and executor. A single process makes session ownership and handoff real without queues or distributed infrastructure that the assignment does not require.
+
+# 2. Artifact schema
+
+The runtime-validated JSON separates format version, capability version, vendor compatibility, typed inputs and outputs, entry point, targets, ordered steps, outcome handlers, success predicates, extraction bindings, external policy profile, and provenance.
+
+Values are tagged references rather than string interpolation. Generic `minorUnits`, `template`, and `map` formats handle display values without capability-specific code. Currency remains integer minor units at the boundary. Predicates are a closed union; artifacts cannot contain executable expressions. Targets use stable user-facing relationships such as role and name or a frame, table row, and constrained control. Every target must resolve to exactly one visible control.
+
+The artifact distinguishes trace-derived steps from engineer-authored runtime knowledge. An engineer defines the callable inputs and outputs, success predicate, action effects, and known outcomes; the model discovers the path through the UI. A successful run cannot teach what “session expired” means, so handlers and safety policy are versioned separately and identified in provenance.
+
+```json
+{
+  "step": {
+    "action": {
+      "kind": "fill",
+      "value": { "kind": "input", "name": "amountMinor", "format": { "kind": "minorUnits", "scale": 2 } }
+    },
+    "effect": "reversible"
+  },
+  "handler": {
+    "result": {
+      "status": "recoverable",
+      "action": { "kind": "click", "target": "dismiss-interstitial" },
+      "maxAttempts": 1
+    }
+  },
+  "success": { "predicate": { "kind": "all", "checks": [{ "kind": "urlPath", "path": "/workspace/review" }] } }
+}
+```
+
+# 3. Determinism & error handling
+
+Replay makes no learned decisions. For each step it validates ownership and policy, evaluates conditions in fixed order, resolves a unique target, acts once, and waits for an explicit predicate under a deadline. The surface enforces one monotonic action budget for the entire session, including recovery. It never chooses the first ambiguous match or asks a model to heal an unknown replay state. Final output comes from the live review screen and is checked against the invocation.
+
+Results distinguish success, business outcomes, recoverable conditions, intervention, and failure. A missing member or account and a restricted account are caller-relevant results. A known interstitial gets one contract-defined recovery attempt; failed recovery escalates. Slow rendering uses bounded predicate polling, and an expired postcondition emits `TIMEOUT`. App errors, policy denials, ambiguity, and failed checkpoints stop with a step, expectation, observation, sanitized snapshot, and masked screenshot. Reversible draft edits are annotated and never blindly retried. The flow contains no irreversible financial action and stops before submit.
+
+“Deterministic” means the same action policy for the same observed states, not identical timing or immutable external data. Evidence records the capability version, ownership epoch, semantic actions, predicates, and `modelRequests: 0` for replay.
+
+# 4. Heterogeneity & multi-tenant
+
+Replay depends on `SurfaceAdapter` for actions, predicates, reads, sanitized snapshots, masked failure capture, human-event listening, and session ownership. Playwright implements that contract; the interpreter has no browser-specific dependency. A desktop adapter could use OS accessibility targets. A visual adapter would need bounded regions, pinned OCR and template settings, confidence thresholds, and ambiguity rejection.
+
+For institutions sharing a vendor, the reusable unit is vendor capability plus compatible product version plus restrictive tenant binding. The binding supplies only an origin, entry path, and frame title. Loading it verifies vendor and version; request and action policy remains authoritative. Acceptance tests run the same discovered artifact against Cedar and Harbor branded variants. Unknown versions or failed structural checkpoints stop instead of generating per-tenant automation.
+
+# 5. Escalation & handoff
+
+The runner owns a session ID and monotonically increasing ownership epoch. Every automated action requires the current automation token. On expiry or an unknown safe-to-escalate state, the runner stops dispatch, records context, increments the epoch, and yields the existing browser to a human. Old callbacks cannot act because their token is stale.
+
+The intervention callback receives the reason, step, exact resume predicate, and an instruction derived from that predicate. A new automation epoch is issued only after the engine validates the checkpoint. Steps declare `read`, `reversible`, or `irreversible` effects. An irreversible step cannot execute until the callback explicitly returns `approved: true`; declining leaves an `APPROVAL_REQUIRED` intervention. Human events are recorded without typed field values. Production would put input arbitration in an authenticated remote-session gateway; the local demo assumes a trusted operator.
+
+# 6. Safety
+
+Trusted configuration allowlists parsed origins, path prefixes, and operations and separately denies the submit route. Request interception covers navigation and page resources, and service workers are disabled. Immediately before dispatch, policy checks the resolved element's accessible identity and its actual anchor or form destination. The model has no arbitrary JavaScript, shell, filesystem, or request tool.
+
+Artifacts carry a policy reference but cannot grant permission. Inputs are validated before navigation and held in memory. Artifacts store references, not values. Evidence persists a semantic control inventory without page bodies, field values, or table-row contents, then redacts artifact-marked values and PII patterns. Failure screenshots mask fields and table values. Raw cookies, browser storage, prompts, traces, and unmasked screenshots are excluded. A byte scan covers committed evidence with seeded and unfamiliar canaries.
+
+Reviewed fault and handoff runs are generated by the deterministic test harness with scripted operator callbacks. The headed demo exercises the separate manual operator path.
+
+# 7. Cuts
+
+I implemented one browser adapter, one deep workflow, restrictive bindings for two branded tenant variants, an agent-facing catalog, and a fault matrix. I did not build desktop or vision automation, hosted infrastructure, credential handling, tenant provisioning, a remote co-browsing console, or model-assisted replay recovery. The small acceptance matrix is not a statistical reliability claim; production confidence would require materially more repeated runs.

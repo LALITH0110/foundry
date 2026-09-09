@@ -1,0 +1,20 @@
+{
+  "revision": 1,
+  "path": "/workspace/review",
+  "title": "Review stop payment · LegacyBank CoreServicing",
+  "controls": [
+    {
+      "kind": "button",
+      "name": "Submit stop payment",
+      "allowedActions": [],
+      "blockedReason": "policy"
+    },
+    {
+      "kind": "link",
+      "name": "Edit request",
+      "allowedActions": [
+        "click"
+      ]
+    }
+  ]
+}

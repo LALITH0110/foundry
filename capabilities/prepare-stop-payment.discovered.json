@@ -1,0 +1,599 @@
+{
+  "schemaVersion": "1.0",
+  "id": "prepare_stop_payment_review",
+  "version": "1.0.0-discovered",
+  "description": "Prepare a synthetic stop-payment request and stop at review without submitting it.",
+  "vendor": "LegacyBank CoreServicing",
+  "compatibleVersions": ["7.4"],
+  "entry": {
+    "path": "/servicing"
+  },
+  "inputSchema": {
+    "memberId": {
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "pattern": "^\\d{5}$"
+    },
+    "accountSuffix": {
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "pattern": "^\\d{4}$"
+    },
+    "checkNumber": {
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "pattern": "^\\d{1,10}$"
+    },
+    "amountMinor": {
+      "type": "integer",
+      "required": true,
+      "sensitive": true,
+      "minimum": 1,
+      "maximum": 100000000
+    },
+    "reason": {
+      "type": "string",
+      "required": true,
+      "enum": ["lost", "stolen", "other"]
+    }
+  },
+  "outputSchema": {
+    "status": {
+      "type": "string"
+    },
+    "memberId": {
+      "type": "string",
+      "sensitive": true
+    },
+    "accountSuffix": {
+      "type": "string",
+      "sensitive": true
+    },
+    "checkNumber": {
+      "type": "string",
+      "sensitive": true
+    },
+    "amountMinor": {
+      "type": "integer",
+      "sensitive": true
+    },
+    "feeMinor": {
+      "type": "integer"
+    },
+    "currency": {
+      "type": "string"
+    }
+  },
+  "targets": {
+    "discovered-target-1": {
+      "kind": "tableRowControl",
+      "frame": "workspace",
+      "rowText": "Member number",
+      "control": "input"
+    },
+    "discovered-target-2": {
+      "kind": "role",
+      "frame": "workspace",
+      "role": "button",
+      "name": "Search member",
+      "exact": true
+    },
+    "discovered-target-3": {
+      "kind": "tableRowLink",
+      "frame": "workspace",
+      "rowTexts": [
+        {
+          "kind": "constant",
+          "value": "Checking"
+        },
+        {
+          "kind": "input",
+          "name": "accountSuffix"
+        }
+      ],
+      "linkName": "Open account"
+    },
+    "discovered-target-4": {
+      "kind": "tableRowControl",
+      "frame": "workspace",
+      "rowText": "Check number",
+      "control": "input"
+    },
+    "discovered-target-5": {
+      "kind": "tableRowControl",
+      "frame": "workspace",
+      "rowText": "Reason",
+      "control": "select"
+    },
+    "discovered-target-6": {
+      "kind": "tableRowControl",
+      "frame": "workspace",
+      "rowText": "Amount (USD)",
+      "control": "input"
+    },
+    "discovered-target-7": {
+      "kind": "role",
+      "frame": "workspace",
+      "role": "button",
+      "name": "Continue to review",
+      "exact": true
+    },
+    "member-input": {
+      "kind": "tableRowControl",
+      "frame": "workspace",
+      "rowText": "Member number",
+      "control": "input"
+    },
+    "search-button": {
+      "kind": "role",
+      "frame": "workspace",
+      "role": "button",
+      "name": "Search member",
+      "exact": true
+    },
+    "member-not-found": {
+      "kind": "text",
+      "frame": "workspace",
+      "text": "No member was found for that member number.",
+      "exact": true
+    },
+    "session-expired": {
+      "kind": "text",
+      "frame": "workspace",
+      "text": "Session expired",
+      "exact": true
+    },
+    "app-error": {
+      "kind": "text",
+      "frame": "workspace",
+      "text": "CORE-503: The servicing host is temporarily unavailable.",
+      "exact": true
+    },
+    "restricted": {
+      "kind": "text",
+      "frame": "workspace",
+      "text": "Stop-payment actions are not permitted for this account.",
+      "exact": true
+    },
+    "member-id-value": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Member number"
+    },
+    "account-link": {
+      "kind": "tableRowLink",
+      "frame": "workspace",
+      "rowTexts": [
+        {
+          "kind": "constant",
+          "value": "Checking"
+        },
+        {
+          "kind": "input",
+          "name": "accountSuffix"
+        }
+      ],
+      "linkName": "Open account"
+    },
+    "check-input": {
+      "kind": "tableRowControl",
+      "frame": "workspace",
+      "rowText": "Check number",
+      "control": "input"
+    },
+    "amount-input": {
+      "kind": "tableRowControl",
+      "frame": "workspace",
+      "rowText": "Amount (USD)",
+      "control": "input"
+    },
+    "reason-select": {
+      "kind": "tableRowControl",
+      "frame": "workspace",
+      "rowText": "Reason",
+      "control": "select"
+    },
+    "review-button": {
+      "kind": "role",
+      "frame": "workspace",
+      "role": "button",
+      "name": "Continue to review",
+      "exact": true
+    },
+    "review-member": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Member number"
+    },
+    "review-account": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Account"
+    },
+    "review-check": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Check number"
+    },
+    "review-amount": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Amount"
+    },
+    "review-reason": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Reason"
+    },
+    "review-fee": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Fee"
+    },
+    "review-status": {
+      "kind": "tableRowValue",
+      "frame": "workspace",
+      "rowText": "Status"
+    },
+    "submit-button": {
+      "kind": "role",
+      "frame": "workspace",
+      "role": "button",
+      "name": "Submit stop payment",
+      "exact": true
+    },
+    "known-interstitial": {
+      "kind": "text",
+      "frame": "workspace",
+      "text": "Account notice",
+      "exact": true
+    },
+    "dismiss-interstitial": {
+      "kind": "role",
+      "frame": "workspace",
+      "role": "link",
+      "name": "Continue",
+      "exact": true
+    }
+  },
+  "steps": [
+    {
+      "id": "open-entry",
+      "action": {
+        "kind": "navigate",
+        "path": "/servicing"
+      },
+      "postcondition": {
+        "kind": "visible",
+        "target": "discovered-target-1"
+      },
+      "timeoutMs": 5000,
+      "effect": "read"
+    },
+    {
+      "id": "discovered-1",
+      "action": {
+        "kind": "fill",
+        "target": "discovered-target-1",
+        "value": {
+          "kind": "input",
+          "name": "memberId"
+        }
+      },
+      "precondition": {
+        "kind": "urlPath",
+        "path": "/workspace/search"
+      },
+      "timeoutMs": 5000,
+      "effect": "reversible"
+    },
+    {
+      "id": "discovered-2",
+      "action": {
+        "kind": "click",
+        "target": "discovered-target-2"
+      },
+      "precondition": {
+        "kind": "urlPath",
+        "path": "/workspace/search"
+      },
+      "postcondition": {
+        "kind": "urlPath",
+        "path": "/workspace/member"
+      },
+      "timeoutMs": 5000,
+      "effect": "read"
+    },
+    {
+      "id": "discovered-3",
+      "action": {
+        "kind": "click",
+        "target": "discovered-target-3"
+      },
+      "precondition": {
+        "kind": "all",
+        "checks": [
+          {
+            "kind": "urlPath",
+            "path": "/workspace/member"
+          },
+          {
+            "kind": "textEquals",
+            "target": "member-id-value",
+            "value": {
+              "kind": "input",
+              "name": "memberId"
+            }
+          }
+        ]
+      },
+      "postcondition": {
+        "kind": "urlPath",
+        "path": "/workspace/stop-payment"
+      },
+      "onTargetMissing": {
+        "status": "business_outcome",
+        "code": "ACCOUNT_NOT_FOUND"
+      },
+      "timeoutMs": 5000,
+      "effect": "read"
+    },
+    {
+      "id": "discovered-4",
+      "action": {
+        "kind": "fill",
+        "target": "discovered-target-4",
+        "value": {
+          "kind": "input",
+          "name": "checkNumber"
+        }
+      },
+      "precondition": {
+        "kind": "urlPath",
+        "path": "/workspace/stop-payment"
+      },
+      "timeoutMs": 5000,
+      "effect": "reversible"
+    },
+    {
+      "id": "discovered-5",
+      "action": {
+        "kind": "select",
+        "target": "discovered-target-5",
+        "value": {
+          "kind": "input",
+          "name": "reason"
+        }
+      },
+      "precondition": {
+        "kind": "urlPath",
+        "path": "/workspace/stop-payment"
+      },
+      "timeoutMs": 5000,
+      "effect": "reversible"
+    },
+    {
+      "id": "discovered-6",
+      "action": {
+        "kind": "fill",
+        "target": "discovered-target-6",
+        "value": {
+          "kind": "input",
+          "name": "amountMinor",
+          "format": {
+            "kind": "minorUnits",
+            "scale": 2
+          }
+        }
+      },
+      "precondition": {
+        "kind": "urlPath",
+        "path": "/workspace/stop-payment"
+      },
+      "timeoutMs": 5000,
+      "effect": "reversible"
+    },
+    {
+      "id": "discovered-7",
+      "action": {
+        "kind": "click",
+        "target": "discovered-target-7"
+      },
+      "precondition": {
+        "kind": "urlPath",
+        "path": "/workspace/stop-payment"
+      },
+      "postcondition": {
+        "kind": "urlPath",
+        "path": "/workspace/review"
+      },
+      "timeoutMs": 5000,
+      "effect": "reversible"
+    }
+  ],
+  "handlers": [
+    {
+      "id": "known-interstitial",
+      "when": {
+        "kind": "visible",
+        "target": "known-interstitial"
+      },
+      "result": {
+        "status": "recoverable",
+        "action": {
+          "kind": "click",
+          "target": "dismiss-interstitial"
+        },
+        "postcondition": {
+          "kind": "urlPath",
+          "path": "/workspace/member"
+        },
+        "maxAttempts": 1
+      }
+    },
+    {
+      "id": "member-not-found",
+      "when": {
+        "kind": "visible",
+        "target": "member-not-found"
+      },
+      "result": {
+        "status": "business_outcome",
+        "code": "MEMBER_NOT_FOUND"
+      }
+    },
+    {
+      "id": "account-restricted",
+      "when": {
+        "kind": "visible",
+        "target": "restricted"
+      },
+      "result": {
+        "status": "business_outcome",
+        "code": "ACTION_NOT_PERMITTED"
+      }
+    },
+    {
+      "id": "session-expired",
+      "when": {
+        "kind": "visible",
+        "target": "session-expired"
+      },
+      "result": {
+        "status": "intervention_required",
+        "code": "SESSION_EXPIRED"
+      }
+    },
+    {
+      "id": "app-error",
+      "when": {
+        "kind": "visible",
+        "target": "app-error"
+      },
+      "result": {
+        "status": "failed",
+        "code": "APP_ERROR"
+      }
+    }
+  ],
+  "success": {
+    "predicate": {
+      "kind": "all",
+      "checks": [
+        {
+          "kind": "urlPath",
+          "path": "/workspace/review"
+        },
+        {
+          "kind": "textEquals",
+          "target": "review-member",
+          "value": {
+            "kind": "input",
+            "name": "memberId"
+          }
+        },
+        {
+          "kind": "textEquals",
+          "target": "review-account",
+          "value": {
+            "kind": "input",
+            "name": "accountSuffix",
+            "format": {
+              "kind": "template",
+              "template": "Checking ending {{value}}"
+            }
+          }
+        },
+        {
+          "kind": "textEquals",
+          "target": "review-check",
+          "value": {
+            "kind": "input",
+            "name": "checkNumber"
+          }
+        },
+        {
+          "kind": "textEquals",
+          "target": "review-amount",
+          "value": {
+            "kind": "input",
+            "name": "amountMinor",
+            "format": {
+              "kind": "minorUnits",
+              "scale": 2,
+              "prefix": "$"
+            }
+          }
+        },
+        {
+          "kind": "textEquals",
+          "target": "review-reason",
+          "value": {
+            "kind": "input",
+            "name": "reason",
+            "format": {
+              "kind": "map",
+              "values": {
+                "lost": "Lost check",
+                "stolen": "Stolen check",
+                "other": "Other"
+              }
+            }
+          }
+        },
+        {
+          "kind": "textEquals",
+          "target": "review-status",
+          "value": {
+            "kind": "constant",
+            "value": "Ready for review"
+          }
+        }
+      ]
+    },
+    "outputs": {
+      "status": {
+        "kind": "constant",
+        "value": "review_ready"
+      },
+      "memberId": {
+        "kind": "extract",
+        "target": "review-member",
+        "parse": "text"
+      },
+      "accountSuffix": {
+        "kind": "input",
+        "name": "accountSuffix"
+      },
+      "checkNumber": {
+        "kind": "extract",
+        "target": "review-check",
+        "parse": "text"
+      },
+      "amountMinor": {
+        "kind": "extract",
+        "target": "review-amount",
+        "parse": "usdMinor"
+      },
+      "feeMinor": {
+        "kind": "extract",
+        "target": "review-fee",
+        "parse": "usdMinor"
+      },
+      "currency": {
+        "kind": "constant",
+        "value": "USD"
+      }
+    }
+  },
+  "policyProfile": "legacybank-review-only-v1",
+  "provenance": {
+    "kind": "discovered",
+    "discoveryRunId": "e99b305d-b906-49ce-bbc4-e32d6d5582bb",
+    "model": "qwen3:4b",
+    "note": "Executed path from the linked genuine Qwen discovery run; engineer-authored contract metadata was migrated to generic formats, effects, and recovery semantics without rerunning the model."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "revision": 1,
+  "path": "/workspace/interstitial",
+  "title": "Account notice · LegacyBank CoreServicing",
+  "controls": [
+    {
+      "kind": "link",
+      "name": "Continue",
+      "allowedActions": [
+        "click"
+      ]
+    }
+  ]
+}

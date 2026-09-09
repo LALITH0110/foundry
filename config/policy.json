@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "allowedOrigins": ["http://127.0.0.1:3000", "http://localhost:3000"],
+  "allowedPathPrefixes": ["/servicing", "/workspace", "/auth", "/assets"],
+  "blockedPathPrefixes": ["/workspace/submit"],
+  "allowedActions": ["navigate", "click", "fill", "select", "read", "check"],
+  "blockedControlNames": ["Submit stop payment", "Delete", "Transfer funds"],
+  "maxActions": 25
+}

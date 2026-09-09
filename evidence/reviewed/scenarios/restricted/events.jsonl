@@ -1,0 +1,12 @@
+{"timestamp":"2026-09-09T15:50:17.804Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"step.started","stepId":"open-entry","action":"navigate","effect":"read","ownershipEpoch":1}
+{"timestamp":"2026-09-09T15:50:17.828Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"action.completed","stepId":"open-entry","action":"navigate","effect":"read","ownershipEpoch":1,"actionCount":1,"maxActions":25}
+{"timestamp":"2026-09-09T15:50:17.853Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"step.completed","stepId":"open-entry"}
+{"timestamp":"2026-09-09T15:50:17.858Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"step.started","stepId":"discovered-1","action":"fill","effect":"reversible","ownershipEpoch":1}
+{"timestamp":"2026-09-09T15:50:17.878Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"action.completed","stepId":"discovered-1","action":"fill","effect":"reversible","ownershipEpoch":1,"actionCount":2,"maxActions":25}
+{"timestamp":"2026-09-09T15:50:17.885Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"step.completed","stepId":"discovered-1"}
+{"timestamp":"2026-09-09T15:50:17.889Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"step.started","stepId":"discovered-2","action":"click","effect":"read","ownershipEpoch":1}
+{"timestamp":"2026-09-09T15:50:17.942Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"action.completed","stepId":"discovered-2","action":"click","effect":"read","ownershipEpoch":1,"actionCount":3,"maxActions":25}
+{"timestamp":"2026-09-09T15:50:17.973Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"step.completed","stepId":"discovered-2"}
+{"timestamp":"2026-09-09T15:50:17.978Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"step.started","stepId":"discovered-3","action":"click","effect":"read","ownershipEpoch":1}
+{"timestamp":"2026-09-09T15:50:18.022Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"action.completed","stepId":"discovered-3","action":"click","effect":"read","ownershipEpoch":1,"actionCount":4,"maxActions":25}
+{"timestamp":"2026-09-09T15:50:18.031Z","runId":"7f3c613f-4ab3-49b5-8097-9accab725ee7","type":"handler.matched","stepId":"discovered-3","handlerId":"account-restricted","result":{"status":"business_outcome","code":"ACTION_NOT_PERMITTED"}}

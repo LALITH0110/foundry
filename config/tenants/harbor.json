@@ -1,0 +1,7 @@
+{
+  "id": "harbor-community-bank",
+  "origin": "http://127.0.0.1:3000",
+  "entryPath": "/servicing",
+  "frameTitle": "Account workspace",
+  "reviewedFor": { "vendor": "LegacyBank CoreServicing", "version": "7.4" }
+}
